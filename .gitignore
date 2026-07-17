@@ -1,0 +1,5 @@
+.agents/memory/
+# Claude Code local files (set up symlinks manually)
+CLAUDE.md
+.claude/settings.local.json
+.claude/scheduled_tasks.lock

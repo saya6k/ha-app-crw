@@ -1,0 +1,11 @@
+---
+configuration:
+  max_search_results:
+    name: 최대 검색 결과 수
+    description: >-
+      web_search가 conversation agent에 반환하는 결과 수의 상한 (1-6).
+      agent가 호출마다 더 적게 요청할 수 있습니다.
+  safe_search:
+    name: 세이프 서치
+    description: >-
+      SearXNG 세이프 서치 수준 — 0 끔, 1 보통, 2 엄격.
