@@ -24,7 +24,12 @@ ports_description:
     clients.
 options:
   max_search_results: 3
+  outgoing_proxy: ''
   safe_search: 1
+  search_engines: []
 schema:
   max_search_results: int(1,6)
+  outgoing_proxy: str?
   safe_search: int(0,2)
+  search_engines:
+    - str?

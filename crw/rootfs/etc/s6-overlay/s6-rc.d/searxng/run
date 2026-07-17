@@ -4,13 +4,18 @@ set -euo pipefail
 
 mkdir -p /run/crw
 
-# Render runtime settings: per-boot secret (stateless JSON API) + options.
+# botdetection probes for limiter.toml next to the settings file even with
+# the limiter off — an empty file silences the startup warning.
+touch /run/crw/limiter.toml
+
+# Per-boot secret: the JSON API is stateless, nothing needs to survive restarts.
 SECRET_KEY="$(head -c 32 /dev/urandom | od -A n -t x1 | tr -d ' \n')"
-SAFE_SEARCH="$(bashio::config 'safe_search' '1' 2>/dev/null || echo 1)"
-case "${SAFE_SEARCH}" in 0|1|2) ;; *) SAFE_SEARCH=1 ;; esac
-sed -e "s/@SECRET_KEY@/${SECRET_KEY}/" \
-    -e "s/'@SAFE_SEARCH@'/${SAFE_SEARCH}/" \
-    /etc/searxng/settings.yml > /run/crw/searxng-settings.yml
+
+/opt/venv-searxng/bin/python /opt/mcp-bridge/render_settings.py \
+  --base /etc/searxng/settings.yml \
+  --options /data/options.json \
+  --secret "${SECRET_KEY}" \
+  --out /run/crw/searxng-settings.yml
 
 export SEARXNG_SETTINGS_PATH=/run/crw/searxng-settings.yml
 

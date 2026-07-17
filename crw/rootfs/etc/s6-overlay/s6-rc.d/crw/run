@@ -1,4 +1,4 @@
-#!/usr/bin/with-contenv bash
+#!/usr/bin/with-contenv bashio
 # shellcheck shell=bash
 set -euo pipefail
 
@@ -7,6 +7,15 @@ set -euo pipefail
 export CRW_SERVER__HOST=127.0.0.1
 export CRW_SERVER__PORT=3000
 export CRW_SEARCH__SEARXNG_URL=http://127.0.0.1:8080
+
+# Optional egress proxy for scraping (anti-bot bypass). reqwest picks up the
+# standard proxy env vars; loopback services must stay direct.
+PROXY="$(bashio::config 'outgoing_proxy' '' 2>/dev/null || true)"
+if [ -n "${PROXY}" ] && [ "${PROXY}" != "null" ]; then
+  export HTTP_PROXY="${PROXY}" HTTPS_PROXY="${PROXY}"
+  export NO_PROXY="127.0.0.1,localhost"
+  echo "[crw] outgoing proxy enabled"
+fi
 
 echo "[crw] starting crw-server on 127.0.0.1:3000 …"
 exec /usr/local/bin/crw-server

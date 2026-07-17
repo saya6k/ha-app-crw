@@ -2,7 +2,9 @@
 # Bundled SearXNG configuration, based on crw's sidecar config
 # (us/crw config/searxng/settings.yml) — search flows only through
 # crw /v1/search, mirroring the upstream docker-compose stack.
-# @SECRET_KEY@ / @SAFE_SEARCH@ are rendered at boot by the s6 run script.
+# This is a template: render_settings.py merges add-on options
+# (safe_search, search_engines, outgoing_proxy) and the boot secret
+# into the runtime copy under /run/crw/.
 use_default_settings: true
 
 general:
@@ -13,7 +15,7 @@ general:
   enable_metrics: false
 
 search:
-  safe_search: '@SAFE_SEARCH@'
+  safe_search: 1
   autocomplete: ''
   default_lang: auto
   # JSON format must be explicitly enabled — SearXNG returns 403 on
