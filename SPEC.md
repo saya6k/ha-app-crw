@@ -37,19 +37,20 @@ HA App 컨테이너 하나에 s6-overlay v3로 세 서비스를 묶는다:
 ```
 ┌─ ha-app crw ────────────────────────────────────────────────┐
 │  searxng      UDS /run/crw/searxng.sock   메타 검색 (JSON)   │
-│  crw-server   UDS 또는 127.0.0.1:3000     스크레이핑         │
+│  crw-server   127.0.0.1:3000              스크레이핑 전용     │
 │  mcp-bridge   0.0.0.0:8099   MCP 서버 (streamable HTTP /mcp) │
-│     ├─ tool web_search  → crw /v1/search (SearXNG 백엔드)⁽*⁾ │
+│     ├─ tool web_search  → SearXNG UDS 직접 호출⁽*⁾           │
 │     └─ tool web_scrape  → crw POST /v1/scrape                │
 └──────────────────────────────────────────────────────────────┘
         ▲ http://03f32180-crw:8099/mcp (HA 내부 네트워크)
    HA 공식 MCP integration → llm tool → conversation agent
 ```
 
-⁽*⁾ crw의 Docker 스택은 SearXNG를 검색 백엔드 sidecar로 쓰도록 설계되어 있다
-(`/v1/search`가 SearXNG 경유). 번들 SearXNG를 crw에 연결하는 설정을 우선
-사용하고, 단일 컨테이너에서 불가하면 bridge가 SearXNG JSON API를 직접 호출
-(§10-1 — 어느 쪽이든 검색은 항상 SearXNG를 거친다는 요구는 동일하게 충족).
+⁽*⁾ 확정(T3): crw의 `/v1/search`는 자체 백엔드가 아니라 **외부 SearXNG URL이
+필수**(`CRW_SEARCH__SEARXNG_URL`)이고 UDS 클라이언트 지원은 불확실하다. 경량화
+원칙에 따라 bridge가 SearXNG JSON API를 UDS로 직접 호출하고, crw는
+`CRW_SEARCH__ENABLED=false`로 스크레이핑 전용으로 둔다 — 검색은 항상 SearXNG를
+거친다는 요구를 더 짧은 경로로 충족.
 
 **내부 통신은 가능한 곳 전부 unix domain socket** (경량화·포트 무노출):
 - searxng: granian/uwsgi UDS 바인드, bridge·crw는 UDS로 호출 (httpx UDS transport)
@@ -246,10 +247,11 @@ custom integration + visual card 렌더링, crawl/map/extract tool,
 
 ## 11. Open Questions
 
-1. **crw-server ↔ 번들 SearXNG 연결 설정** — crw Docker 스택은 SearXNG sidecar를
-   자동 기동해 `/v1/search`에 사용. 단일 컨테이너에서 외부 SearXNG URL을 지정하는
-   env/config 확인 필요. 불가하면 bridge가 SearXNG를 직접 호출 (설계 영향 없음).
-2. **crw-server UDS 바인드 지원 여부** — 미지원이면 127.0.0.1 TCP 유지.
+1. ~~crw-server ↔ 번들 SearXNG 연결 설정~~ → **확정(T3)**: crw 검색은
+   `CRW_SEARCH__SEARXNG_URL` 필수(자체 백엔드 없음). bridge가 SearXNG를 UDS로
+   직접 호출하고 crw는 `CRW_SEARCH__ENABLED=false` (§1 ⁽*⁾ 참조).
+2. ~~crw-server UDS 바인드 지원 여부~~ → **확정(T3)**: 미지원 (CLI는 setup
+   서브커맨드뿐, `CRW_SERVER__HOST/PORT` env로 127.0.0.1:3000 바인드).
 3. **SearXNG 엔진 기본셋과 knob 확장** — 엔진 선택을 사용자 옵션으로 열지
    (기본안: settings.yml 고정, 요청 오면 `engines` 리스트 옵션 추가).
 4. **crw 자체 `/mcp` 직결로 bridge 대체 가능성** — transport는 이제 문제없음

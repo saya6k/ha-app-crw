@@ -3,12 +3,12 @@
 상세: [tasks/plan.md](plan.md) · 스펙: [SPEC.md](../SPEC.md)
 
 ## Phase 1: Scaffold
-- [ ] T1 로컬 repo scaffold (wardrowbe 템플릿, slug=crw, 워크플로 2-track)
-- [ ] T2 GitHub repo 셋업 (create·CATALOG_PAT·workflow 권한·push)
-- [ ] Checkpoint A: lint green + push 완료 → 사용자 보고
+- [x] T1 로컬 repo scaffold (wardrowbe 템플릿, slug=crw, 워크플로 2-track)
+- [x] T2 GitHub repo 셋업 (create·CATALOG_PAT·workflow 권한·push)
+- [x] Checkpoint A: lint green + push 완료 → 사용자 보고
 
 ## Phase 2: 슬라이스 1 — web_scrape E2E
-- [ ] T3 Dockerfile + crw-server 서비스 (musl 검증·UDS §11-2 확정)
+- [x] T3 Dockerfile + crw-server 서비스 (musl 검증·UDS §11-2 확정 — static binary, UDS 미지원→127.0.0.1)
 - [ ] T4 bridge 골격 + web_scrape + discovery announce + pytest
 - [ ] Checkpoint B: scrape가 /mcp 경유 E2E 동작, 2아치 빌드
 

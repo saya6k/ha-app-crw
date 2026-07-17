@@ -1,0 +1,12 @@
+#!/usr/bin/with-contenv bash
+# shellcheck shell=bash
+set -euo pipefail
+
+# Scrape-only: search stays disabled — web_search goes straight from the
+# bridge to SearXNG over its unix socket, so crw never needs a search backend.
+export CRW_SERVER__HOST=127.0.0.1
+export CRW_SERVER__PORT=3000
+export CRW_SEARCH__ENABLED=false
+
+echo "[crw] starting crw-server on 127.0.0.1:3000 …"
+exec /usr/local/bin/crw-server
