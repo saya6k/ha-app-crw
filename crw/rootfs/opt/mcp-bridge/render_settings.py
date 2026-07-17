@@ -18,8 +18,20 @@ VALID_SAFE_SEARCH = (0, 1, 2)
 # - wikidata: startup SPARQL query widely answered with 403
 # - ahmia/torch: need a Tor proxy that isn't bundled
 # - startpage: response parser broken against their current API (JSON error)
-# - qwant: rate-limits most self-hosted IPs from the first query (429)
-DEFAULT_REMOVED_ENGINES = ["wikidata", "ahmia", "torch", "startpage", "qwant"]
+# - qwant*: rate-limits most self-hosted IPs from the first query (429).
+#   The whole family must go together — qwant news/images/videos declare
+#   `network: qwant`, and removing only the base engine breaks SearXNG's
+#   network init with KeyError: 'qwant'.
+DEFAULT_REMOVED_ENGINES = [
+    "wikidata",
+    "ahmia",
+    "torch",
+    "startpage",
+    "qwant",
+    "qwant news",
+    "qwant images",
+    "qwant videos",
+]
 
 
 def render(base: dict, options: dict, secret_key: str) -> dict:

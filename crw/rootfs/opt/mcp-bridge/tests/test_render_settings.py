@@ -19,12 +19,20 @@ def test_secret_and_defaults():
     assert out["server"]["secret_key"] == "s3cret"
     assert out["search"]["safe_search"] == 1
     # noisy/broken engines are removed by default (wikidata 403s, ahmia/
-    # torch need Tor, startpage's parser is broken, qwant 429s instantly)
-    assert out["use_default_settings"] == {
-        "engines": {
-            "remove": ["wikidata", "ahmia", "torch", "startpage", "qwant"]
-        }
-    }
+    # torch need Tor, startpage's parser is broken, qwant 429s instantly).
+    # The qwant family must be removed together: its siblings declare
+    # `network: qwant` and orphaning them crashes network init.
+    removed = out["use_default_settings"]["engines"]["remove"]
+    assert removed == [
+        "wikidata",
+        "ahmia",
+        "torch",
+        "startpage",
+        "qwant",
+        "qwant news",
+        "qwant images",
+        "qwant videos",
+    ]
     assert "outgoing" not in out
     # base dict must not be mutated
     assert BASE["server"]["secret_key"] == "@SECRET_KEY@"
