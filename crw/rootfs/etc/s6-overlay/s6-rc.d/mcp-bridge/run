@@ -13,6 +13,10 @@ if bashio::supervisor.ping 2>/dev/null; then
   fi
 fi
 
-echo "[mcp-bridge] starting on 0.0.0.0:8099 (/mcp) …"
+BRIDGE_MAX_RESULTS="$(bashio::config 'max_search_results' '3' 2>/dev/null || echo 3)"
+case "${BRIDGE_MAX_RESULTS}" in [1-6]) ;; *) BRIDGE_MAX_RESULTS=3 ;; esac
+export BRIDGE_MAX_RESULTS
+
+echo "[mcp-bridge] starting on 0.0.0.0:8099 (/mcp, max_results=${BRIDGE_MAX_RESULTS}) …"
 cd /opt/mcp-bridge
 exec /opt/venv/bin/python3 server.py

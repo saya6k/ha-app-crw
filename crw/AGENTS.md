@@ -11,14 +11,15 @@ crw/
   config.yaml           slug=crw, stage: experimental, discovery: [mcp]
   Dockerfile            crw-server prebuilt(아치별)+checksum, SearXNG, bridge
   rootfs/etc/s6-overlay/s6-rc.d/{searxng,crw,mcp-bridge}/   longrun 3종
-  rootfs/etc/searxng/settings.yml     format json + UDS
+  rootfs/etc/searxng/settings.yml     crw sidecar 기반, format json, loopback 8080
   rootfs/opt/mcp-bridge/              FastMCP 서버 + pytest tests/
   translations/{en,ko}.yaml
 ```
 
 ## Invariants (SPEC §8)
 
-- 내부 통신 UDS 우선 — 외부 표면은 8099 하나
+- 내부 서비스는 loopback 전용(searxng 8080, crw 3000) — 외부 표면은 8099 하나
+- 검색 흐름은 fastcrw sidecar 패턴: bridge → crw /v1/search → SearXNG
 - 검색은 항상 SearXNG 경유 · crw cloud 사용 금지
 - web_search 결과는 jxlarrea scheme (`source/query/results[]/featured_image/instruction`)
 - 버전 전부 pin + prebuilt checksum

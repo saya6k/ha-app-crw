@@ -14,8 +14,8 @@
 
 ## Phase 3: 슬라이스 2 — web_search E2E
 - [x] T5 SearXNG 서비스 — fastcrw sidecar 패턴으로 변경(사용자 지시): crw pin 버전, loopback 8080, 검색은 crw /v1/search 경유
-- [ ] T6 web_search (jxlarrea scheme) + 옵션 wiring (§11-1 확정)
-- [ ] Checkpoint C: smoke ①②③ 전부 통과 → 사용자 보고
+- [x] T6 web_search (jxlarrea scheme) + 옵션 wiring — bridge → crw /v1/search 경유
+- [x] Checkpoint C: smoke ①②③ 전부 통과 (aarch64)
 
 ## Phase 4: CI·문서·릴리스
 - [ ] T7 CI green (GitHub Actions 전 job)
