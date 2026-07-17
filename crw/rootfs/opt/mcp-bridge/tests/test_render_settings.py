@@ -18,10 +18,12 @@ def test_secret_and_defaults():
     out = render(BASE, {}, "s3cret")
     assert out["server"]["secret_key"] == "s3cret"
     assert out["search"]["safe_search"] == 1
-    # noisy-at-startup engines are removed by default (wikidata 403s,
-    # ahmia/torch need a Tor proxy)
+    # noisy/broken engines are removed by default (wikidata 403s, ahmia/
+    # torch need Tor, startpage's parser is broken, qwant 429s instantly)
     assert out["use_default_settings"] == {
-        "engines": {"remove": ["wikidata", "ahmia", "torch"]}
+        "engines": {
+            "remove": ["wikidata", "ahmia", "torch", "startpage", "qwant"]
+        }
     }
     assert "outgoing" not in out
     # base dict must not be mutated

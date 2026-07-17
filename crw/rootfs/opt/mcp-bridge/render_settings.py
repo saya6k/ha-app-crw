@@ -14,10 +14,12 @@ import yaml
 
 VALID_SAFE_SEARCH = (0, 1, 2)
 
-# Engines whose init fails or spams errors in a typical HA deployment:
-# wikidata's startup SPARQL query is widely answered with 403, and the
-# onion engines need a Tor proxy that isn't bundled.
-DEFAULT_REMOVED_ENGINES = ["wikidata", "ahmia", "torch"]
+# Engines that fail or spam errors in a typical HA deployment:
+# - wikidata: startup SPARQL query widely answered with 403
+# - ahmia/torch: need a Tor proxy that isn't bundled
+# - startpage: response parser broken against their current API (JSON error)
+# - qwant: rate-limits most self-hosted IPs from the first query (429)
+DEFAULT_REMOVED_ENGINES = ["wikidata", "ahmia", "torch", "startpage", "qwant"]
 
 
 def render(base: dict, options: dict, secret_key: str) -> dict:
