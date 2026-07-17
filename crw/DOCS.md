@@ -5,10 +5,12 @@ MCP (Model Context Protocol).
 
 ## How it works
 
-One container runs three services:
+One container runs three services, mirroring crw's own docker-compose stack:
 
-- **SearXNG** — privacy-respecting meta search (internal unix socket only)
-- **crw-server** — fast Rust scraper that converts pages to markdown
+- **SearXNG** — privacy-respecting meta search (loopback only, same version
+  crw's sidecar pins)
+- **crw-server** — fast Rust scraper; search traffic flows exclusively
+  through its `/v1/search`, backed by the bundled SearXNG
 - **mcp-bridge** — MCP server (streamable HTTP at `/mcp`, port 8099) exposing
   two tools: `web_search` and `web_scrape`
 
@@ -45,7 +47,8 @@ is logged outside the container.
 This add-on bundles [crw](https://github.com/us/crw) (AGPL-3.0) and
 [SearXNG](https://github.com/searxng/searxng) (AGPL-3.0). Source for both is
 available at the linked repositories; the add-on's own source lives at
-<https://github.com/saya6k/ha-app-crw>.
+<https://github.com/saya6k/ha-app-crw>. The icon and logo are the CRW brand
+assets from the [us/crw](https://github.com/us/crw) repository (AGPL-3.0).
 
 ## Troubleshooting
 

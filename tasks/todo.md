@@ -18,8 +18,8 @@
 - [x] Checkpoint C: smoke ①②③ 전부 통과 (aarch64)
 
 ## Phase 4: CI·문서·릴리스
-- [ ] T7 CI green (GitHub Actions 전 job)
-- [ ] T8 스모크 스크립트 CI 편입 (amd64)
-- [ ] T9 문서·아이콘·번역 (DOCS/.README.j2/en·ko/icon·logo/AGPL 고지)
+- [x] T7 CI green (PR #1: lint 6종 + unit + build/smoke 2아치 전부 통과)
+- [x] T8 스모크 스크립트 CI 편입 (양 아치 native runner에서 실행)
+- [x] T9 문서·아이콘·번역 (DOCS/.README.j2/en·ko/icon·logo=CRW 브랜드/AGPL 고지)
 - [ ] T10 초기 릴리스 v0.1.0 → GHCR 멀티아치 확인
 - [ ] Checkpoint D: Success Criteria 1·2·4 충족, 3(HA E2E)은 사용자 인계
