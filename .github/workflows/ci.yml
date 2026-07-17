@@ -105,6 +105,19 @@ jobs:
             crw/DOCS.md
             crw/README.md
 
+  unit-tests:
+    name: Bridge unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install test deps
+        run: pip install pytest httpx==0.28.1
+      - name: pytest
+        run: python -m pytest crw/rootfs/opt/mcp-bridge -q
+
   build-test:
     name: build test (${{ matrix.arch }})
     if: >-
@@ -130,10 +143,14 @@ jobs:
           context: crw
           platforms: ${{ matrix.platform }}
           push: false
+          load: true
+          tags: crw-app:ci
           provenance: false
           sbom: false
           cache-from: type=gha,scope=${{ matrix.arch }}
           cache-to: type=gha,mode=min,scope=${{ matrix.arch }}
+      - name: Smoke test
+        run: bash scripts/smoke.sh crw-app:ci
 
   ci-ok:
     name: CI passed
@@ -145,6 +162,7 @@ jobs:
       - lint-shell
       - lint-unicode
       - lint-markdown
+      - unit-tests
       - build-test
     runs-on: ubuntu-latest
     steps:
@@ -158,6 +176,7 @@ jobs:
             "${{ needs.lint-shell.result }}" \
             "${{ needs.lint-unicode.result }}" \
             "${{ needs.lint-markdown.result }}" \
+            "${{ needs.unit-tests.result }}" \
             "${{ needs.build-test.result }}"; do
             case "$result" in
               success|skipped) ;;
