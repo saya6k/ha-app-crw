@@ -19,6 +19,6 @@ configuration:
     name: 검색 엔진
     description: >-
       활성화할 SearXNG 엔진 이름 목록 (예: duckduckgo, brave, startpage).
-      비우면 SearXNG 기본값을 사용합니다. wikidata 엔진은 시작 쿼리가
-      HTTP 403으로 차단되는 경우가 잦아 기본 제외됩니다 — 다시 쓰려면
-      여기에 추가하세요.
+      비우면 SearXNG 기본값을 사용합니다. wikidata(시작 쿼리가 HTTP 403으로
+      차단되는 경우가 잦음)와 Tor 엔진 ahmia/torch(Tor 프록시 필요)는 기본
+      제외됩니다 — 다시 쓰려면 여기에 추가하세요.

@@ -17,5 +17,15 @@ if [ -n "${PROXY}" ] && [ "${PROXY}" != "null" ]; then
   echo "[crw] outgoing proxy enabled"
 fi
 
+# s6 only orders process start, not readiness — wait for SearXNG to listen
+# so crw doesn't log its search backend as unreachable on every boot.
+for _ in $(seq 1 60); do
+  if curl -sf -m 1 -o /dev/null http://127.0.0.1:8080/; then
+    echo "[crw] searxng is ready"
+    break
+  fi
+  sleep 0.5
+done
+
 echo "[crw] starting crw-server on 127.0.0.1:3000 …"
 exec /usr/local/bin/crw-server

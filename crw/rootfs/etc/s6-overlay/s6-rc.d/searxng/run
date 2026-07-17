@@ -21,4 +21,5 @@ export SEARXNG_SETTINGS_PATH=/run/crw/searxng-settings.yml
 
 echo "[searxng] starting on 127.0.0.1:8080 …"
 exec /opt/venv-searxng/bin/granian --interface wsgi \
+  --blocking-threads 4 \
   --host 127.0.0.1 --port 8080 searx.webapp:app

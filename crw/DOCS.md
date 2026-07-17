@@ -36,7 +36,7 @@ needs access.
 | `max_search_results` | `3` | Upper bound on results `web_search` returns (1-6) |
 | `outgoing_proxy` | empty | HTTP/SOCKS proxy URL for all outgoing search and scrape traffic — useful when engines or sites block your network's address (anti-bot). Empty = direct |
 | `safe_search` | `1` | SearXNG safe search: 0 off, 1 moderate, 2 strict |
-| `search_engines` | empty | SearXNG engine names to enable (`keep_only`), e.g. `duckduckgo`, `brave`. Empty = SearXNG defaults. `wikidata` is removed by default (its startup query is often answered with HTTP 403); list it here to opt back in |
+| `search_engines` | empty | SearXNG engine names to enable (`keep_only`), e.g. `duckduckgo`, `brave`. Empty = SearXNG defaults minus `wikidata` (startup query often answered with HTTP 403) and the Tor engines `ahmia`/`torch` (need a Tor proxy); list them here to opt back in |
 
 ## Privacy
 

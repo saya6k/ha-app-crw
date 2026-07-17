@@ -20,6 +20,6 @@ configuration:
     name: Search engines
     description: >-
       SearXNG engine names to enable (e.g. duckduckgo, brave, startpage).
-      Leave empty to use the SearXNG defaults. The wikidata engine is
-      removed by default because its startup query is often blocked with
-      HTTP 403 — add it here to opt back in.
+      Leave empty to use the SearXNG defaults. wikidata (startup query
+      often blocked with HTTP 403) and the Tor engines ahmia/torch (need
+      a Tor proxy) are removed by default — list them here to opt back in.

@@ -14,6 +14,11 @@ import yaml
 
 VALID_SAFE_SEARCH = (0, 1, 2)
 
+# Engines whose init fails or spams errors in a typical HA deployment:
+# wikidata's startup SPARQL query is widely answered with 403, and the
+# onion engines need a Tor proxy that isn't bundled.
+DEFAULT_REMOVED_ENGINES = ["wikidata", "ahmia", "torch"]
+
 
 def render(base: dict, options: dict, secret_key: str) -> dict:
     """Merge add-on options into the base settings template."""
@@ -28,9 +33,9 @@ def render(base: dict, options: dict, secret_key: str) -> dict:
     if engines:
         out["use_default_settings"] = {"engines": {"keep_only": engines}}
     else:
-        # wikidata's init runs a SPARQL query that many networks answer with
-        # 403, spamming the log — drop it unless the user opts back in.
-        out["use_default_settings"] = {"engines": {"remove": ["wikidata"]}}
+        out["use_default_settings"] = {
+            "engines": {"remove": list(DEFAULT_REMOVED_ENGINES)}
+        }
 
     proxy = options.get("outgoing_proxy")
     if proxy:
