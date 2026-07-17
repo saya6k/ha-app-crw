@@ -1,0 +1,18 @@
+#!/usr/bin/with-contenv bashio
+# shellcheck shell=bash
+set -euo pipefail
+
+# Announce the MCP endpoint via Supervisor discovery. Harmless today (core's
+# mcp integration has no hassio discovery step yet) and free once it does.
+# Skipped silently when no Supervisor is present (bare docker smoke tests).
+if bashio::supervisor.ping 2>/dev/null; then
+  if bashio::discovery "mcp" "{\"url\": \"http://$(hostname):8099/mcp\"}" > /dev/null; then
+    bashio::log.info "Announced MCP endpoint to Supervisor"
+  else
+    bashio::log.warning "Supervisor discovery announce failed (non-fatal)"
+  fi
+fi
+
+echo "[mcp-bridge] starting on 0.0.0.0:8099 (/mcp) …"
+cd /opt/mcp-bridge
+exec /opt/venv/bin/python3 server.py

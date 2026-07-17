@@ -24,6 +24,13 @@ RUN set -eu; \
     chmod a+x /usr/local/bin/crw-server; \
     rm /tmp/crw.tar.gz
 
+# ---- MCP bridge (Python venv) ---------------------------------------------
+COPY rootfs/opt/mcp-bridge/requirements.txt /tmp/requirements.txt
+RUN apk add --no-cache python3 py3-pip \
+ && python3 -m venv /opt/venv \
+ && /opt/venv/bin/pip install --no-cache-dir -r /tmp/requirements.txt \
+ && rm /tmp/requirements.txt
+
 # ---- rootfs (s6 services) -------------------------------------------------
 COPY rootfs /
 
