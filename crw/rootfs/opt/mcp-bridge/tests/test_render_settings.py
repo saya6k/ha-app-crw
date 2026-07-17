@@ -44,11 +44,26 @@ def test_safe_search_from_options_with_validation():
     assert render(BASE, {"safe_search": "x"}, "k")["search"]["safe_search"] == 1
 
 
-def test_engine_keep_only():
+def test_engine_keep_only_enables_selection():
     out = render(BASE, {"search_engines": ["duckduckgo", "brave"]}, "k")
     assert out["use_default_settings"] == {
         "engines": {"keep_only": ["duckduckgo", "brave"]}
     }
+    # selected engines are force-enabled (some defaults ship disabled)
+    assert out["engines"] == [
+        {"name": "duckduckgo", "disabled": False},
+        {"name": "brave", "disabled": False},
+    ]
+
+
+def test_engine_selection_pulls_network_parents():
+    # qwant news declares `network: qwant` — the parent must be kept (not
+    # enabled) or SearXNG's network init dies with KeyError: 'qwant'
+    out = render(BASE, {"search_engines": ["qwant news", "brave.images"]}, "k")
+    keep = out["use_default_settings"]["engines"]["keep_only"]
+    assert keep == ["qwant news", "brave.images", "qwant", "brave"]
+    enabled = [e["name"] for e in out["engines"]]
+    assert enabled == ["qwant news", "brave.images"]
 
 
 def test_outgoing_proxy():
