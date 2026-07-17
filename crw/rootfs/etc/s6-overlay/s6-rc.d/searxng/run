@@ -1,0 +1,19 @@
+#!/usr/bin/with-contenv bashio
+# shellcheck shell=bash
+set -euo pipefail
+
+mkdir -p /run/crw
+
+# Render runtime settings: per-boot secret (stateless JSON API) + options.
+SECRET_KEY="$(head -c 32 /dev/urandom | od -A n -t x1 | tr -d ' \n')"
+SAFE_SEARCH="$(bashio::config 'safe_search' '1' 2>/dev/null || echo 1)"
+case "${SAFE_SEARCH}" in 0|1|2) ;; *) SAFE_SEARCH=1 ;; esac
+sed -e "s/@SECRET_KEY@/${SECRET_KEY}/" \
+    -e "s/'@SAFE_SEARCH@'/${SAFE_SEARCH}/" \
+    /etc/searxng/settings.yml > /run/crw/searxng-settings.yml
+
+export SEARXNG_SETTINGS_PATH=/run/crw/searxng-settings.yml
+
+echo "[searxng] starting on 127.0.0.1:8080 …"
+exec /opt/venv-searxng/bin/granian --interface wsgi \
+  --host 127.0.0.1 --port 8080 searx.webapp:app

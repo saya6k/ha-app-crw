@@ -36,26 +36,24 @@ HA App 컨테이너 하나에 s6-overlay v3로 세 서비스를 묶는다:
 
 ```
 ┌─ ha-app crw ────────────────────────────────────────────────┐
-│  searxng      UDS /run/crw/searxng.sock   메타 검색 (JSON)   │
-│  crw-server   127.0.0.1:3000              스크레이핑 전용     │
+│  searxng      127.0.0.1:8080             메타 검색 (JSON)    │
+│  crw-server   127.0.0.1:3000             scrape + search 게이트│
 │  mcp-bridge   0.0.0.0:8099   MCP 서버 (streamable HTTP /mcp) │
-│     ├─ tool web_search  → SearXNG UDS 직접 호출⁽*⁾           │
+│     ├─ tool web_search  → crw POST /v1/search → SearXNG⁽*⁾   │
 │     └─ tool web_scrape  → crw POST /v1/scrape                │
 └──────────────────────────────────────────────────────────────┘
         ▲ http://03f32180-crw:8099/mcp (HA 내부 네트워크)
    HA 공식 MCP integration → llm tool → conversation agent
 ```
 
-⁽*⁾ 확정(T3): crw의 `/v1/search`는 자체 백엔드가 아니라 **외부 SearXNG URL이
-필수**(`CRW_SEARCH__SEARXNG_URL`)이고 UDS 클라이언트 지원은 불확실하다. 경량화
-원칙에 따라 bridge가 SearXNG JSON API를 UDS로 직접 호출하고, crw는
-`CRW_SEARCH__ENABLED=false`로 스크레이핑 전용으로 둔다 — 검색은 항상 SearXNG를
-거친다는 요구를 더 짧은 경로로 충족.
+⁽*⁾ **fastcrw sidecar 패턴 채택(사용자 결정, T5)**: upstream docker-compose와
+동일하게 "search traffic flows exclusively through crw's `/v1/search`" —
+SearXNG는 crw가 pin한 것과 같은 버전(2026.5.9 / `0cba32c15…`)을 crw의 sidecar
+settings.yml 기반 구성으로 번들하고, `CRW_SEARCH__SEARXNG_URL`로 연결한다.
 
-**내부 통신은 가능한 곳 전부 unix domain socket** (경량화·포트 무노출):
-- searxng: granian/uwsgi UDS 바인드, bridge·crw는 UDS로 호출 (httpx UDS transport)
-- crw-server: UDS 지원 시 UDS, 미지원이면 127.0.0.1 TCP (§10-2)
-- bridge의 MCP 엔드포인트(8099)만 TCP — HA가 접속해야 하는 유일한 표면
+**내부 통신 (경량화·포트 무노출):** crw의 검색 클라이언트가 HTTP URL(TCP)만
+받으므로 SearXNG UDS 바인드는 채택하지 않는다 — searxng(8080)·crw(3000)는
+loopback 전용 TCP, 외부 표면은 bridge의 MCP 엔드포인트(8099) 하나뿐이다.
 
 **Auto discovery — Supervisor discovery로 준비, mDNS는 채택 안 함:**
 - `config.yaml`에 `discovery: [mcp]` 선언 + 기동 시
@@ -83,7 +81,7 @@ HA App 컨테이너 하나에 s6-overlay v3로 세 서비스를 묶는다:
 | 구성 | 선택 | 비고 |
 |---|---|---|
 | Base image | HA add-on base (`ARG BUILD_FROM`), s6-overlay v3 | ha-apps 표준 |
-| 검색 | SearXNG (버전 pin) | `settings.yml`에 `format: [json]` 허용 + UDS 바인드 |
+| 검색 | SearXNG — crw sidecar와 동일 커밋 pin (`0cba32c15…` = 2026.5.9) | crw의 sidecar settings.yml 기반, loopback 8080, `format: [json]` |
 | 스크레이핑 | **crw-server v0.25.x prebuilt** — `crw-server-linux-{x64,arm64}.tar.gz` | GitHub release asset 확인 완료, cargo build 불필요. AGPL-3.0 고지 필요 |
 | MCP bridge | Python 3.12+, `mcp` SDK(FastMCP, **streamable HTTP transport**), `httpx`(UDS transport) | HA MCP integration이 streamable HTTP 우선 지원(core 확인). SSE 별도 제공 불필요 |
 | Arch | `amd64`, `aarch64` | 두 아치 모두 prebuilt 존재 |

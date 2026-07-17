@@ -13,7 +13,7 @@
 - [x] Checkpoint B: scrape가 /mcp 경유 E2E 동작 (aarch64 로컬 검증, amd64는 CI)
 
 ## Phase 3: 슬라이스 2 — web_search E2E
-- [ ] T5 SearXNG 서비스 (UDS, json format, TCP 무청취)
+- [x] T5 SearXNG 서비스 — fastcrw sidecar 패턴으로 변경(사용자 지시): crw pin 버전, loopback 8080, 검색은 crw /v1/search 경유
 - [ ] T6 web_search (jxlarrea scheme) + 옵션 wiring (§11-1 확정)
 - [ ] Checkpoint C: smoke ①②③ 전부 통과 → 사용자 보고
 

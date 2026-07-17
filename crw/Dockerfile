@@ -31,6 +31,28 @@ RUN apk add --no-cache python3 py3-pip \
  && /opt/venv/bin/pip install --no-cache-dir -r /tmp/requirements.txt \
  && rm /tmp/requirements.txt
 
+# ---- SearXNG (meta search; rolling release, pinned to a commit) -----------
+# Pinned to the exact SearXNG version crw's own docker-compose sidecar ships
+# (searxng/searxng:2026.5.9-0cba32c15). setup.py imports searx (→ msgspec) at
+# build time, so requirements must be installed first and the package built
+# with --no-build-isolation.
+ARG SEARXNG_COMMIT=0cba32c15f2049cdd8cf978c91d8fa24c1731a0f
+# hadolint ignore=DL3003
+RUN apk add --no-cache --virtual .searxng-build git build-base python3-dev libffi-dev \
+ && python3 -m venv /opt/venv-searxng \
+ && git init -q /tmp/searxng \
+ && git -C /tmp/searxng fetch -q --depth 1 \
+      https://github.com/searxng/searxng "${SEARXNG_COMMIT}" \
+ && git -C /tmp/searxng checkout -q FETCH_HEAD \
+ && /opt/venv-searxng/bin/pip install --no-cache-dir setuptools wheel \
+ && /opt/venv-searxng/bin/pip install --no-cache-dir \
+      -r /tmp/searxng/requirements.txt granian==2.7.4 \
+ && cd /tmp/searxng && /opt/venv-searxng/bin/python -m searx.version freeze && cd / \
+ && /opt/venv-searxng/bin/pip install --no-cache-dir \
+      --use-pep517 --no-build-isolation /tmp/searxng \
+ && rm -rf /tmp/searxng \
+ && apk del .searxng-build
+
 # ---- rootfs (s6 services) -------------------------------------------------
 COPY rootfs /
 
