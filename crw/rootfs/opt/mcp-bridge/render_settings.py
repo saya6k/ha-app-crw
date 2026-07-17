@@ -33,6 +33,31 @@ DEFAULT_REMOVED_ENGINES = [
     "qwant videos",
 ]
 
+# child engine -> engine whose `network:` it references, derived from the
+# pinned SearXNG default settings (searx/settings.yml @ SEARXNG_COMMIT).
+NETWORK_PARENTS = {
+    "adobe stock video": "adobe stock",
+    "adobe stock audio": "adobe stock",
+    "brave.images": "brave",
+    "brave.videos": "brave",
+    "brave.news": "brave",
+    "chinaso images": "chinaso news",
+    "chinaso videos": "chinaso news",
+    "lemmy users": "lemmy communities",
+    "lemmy posts": "lemmy communities",
+    "lemmy comments": "lemmy communities",
+    "piped.music": "piped",
+    "presearch images": "presearch",
+    "presearch videos": "presearch",
+    "presearch news": "presearch",
+    "qwant news": "qwant",
+    "qwant images": "qwant",
+    "qwant videos": "qwant",
+    "yacy images": "yacy",
+    "yandex images": "yandex",
+    "yandex music": "yandex",
+}
+
 
 def render(base: dict, options: dict, secret_key: str) -> dict:
     """Merge add-on options into the base settings template."""
@@ -45,7 +70,17 @@ def render(base: dict, options: dict, secret_key: str) -> dict:
 
     engines = [e for e in options.get("search_engines") or [] if e]
     if engines:
-        out["use_default_settings"] = {"engines": {"keep_only": engines}}
+        # keep_only must include every referenced `network:` parent or
+        # SearXNG's network init crashes (KeyError) on the orphaned child.
+        closure = list(engines)
+        for engine in engines:
+            parent = NETWORK_PARENTS.get(engine)
+            if parent and parent not in closure:
+                closure.append(parent)
+        out["use_default_settings"] = {"engines": {"keep_only": closure}}
+        # Force-enable what the user picked — several defaults ship
+        # disabled. Auto-added parents keep their default state.
+        out["engines"] = [{"name": e, "disabled": False} for e in engines]
     else:
         out["use_default_settings"] = {
             "engines": {"remove": list(DEFAULT_REMOVED_ENGINES)}
