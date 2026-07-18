@@ -32,6 +32,10 @@ def test_secret_and_defaults():
         "qwant news",
         "qwant images",
         "qwant videos",
+        "karmasearch",
+        "karmasearch images",
+        "karmasearch news",
+        "karmasearch videos",
     ]
     assert "outgoing" not in out
     # base dict must not be mutated
