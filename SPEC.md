@@ -67,8 +67,11 @@ loopback 전용 TCP, 외부 표면은 bridge의 MCP 엔드포인트(8099) 하나
 
 - SearXNG-Crawl4AI는 설계 참조(검색/본문 추출 분리 구조)로만 사용, 번들 안 함 —
   Crawl4AI(Playwright/Chromium)는 이미지가 수 GB로 비대.
-- Tool은 `web_search`, `web_scrape` 두 개만 (crawl/map/extract는 대화 턴에
-  부적합, interact는 ha-app-playwright 담당).
+- 기본 tool은 `web_search`, `web_scrape` (crawl/map/extract는 대화 턴에
+  부적합, interact는 ha-app-playwright 담당). 확장 tool
+  `video_search`/`image_search`/`news_search`/`wiki_search`는 provider 옵션
+  선택 시에만 등록되며(미선택 = 자동 비활성), bridge가 SearXNG를 직접
+  `engines=` 스코프로 질의한다 (브랜드→엔진 매핑은 providers.py).
 
 **User stories:**
 1. "어제 발표된 ○○ 소식 찾아줘" → agent가 `web_search` 호출 → SearXNG 결과를
