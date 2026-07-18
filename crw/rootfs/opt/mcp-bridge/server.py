@@ -1,12 +1,16 @@
 """crw MCP bridge — streamable HTTP server for Home Assistant's MCP client."""
 
+import json
 import logging
+import os
 
 from mcp.server.fastmcp import FastMCP
 
 import tools
+from providers import engines_for
 
 logging.basicConfig(level=logging.INFO, format="[mcp-bridge] %(message)s")
+log = logging.getLogger(__name__)
 
 mcp = FastMCP(
     "CRW Web Tools",
@@ -14,6 +18,16 @@ mcp = FastMCP(
     port=8099,
     stateless_http=True,
 )
+
+
+def load_options() -> dict:
+    """Add-on options; tolerate absence for bare-docker smoke runs."""
+    path = os.environ.get("BRIDGE_OPTIONS_PATH", "/data/options.json")
+    try:
+        with open(path) as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return {}
 
 
 @mcp.tool()
@@ -37,5 +51,73 @@ async def web_scrape(url: str) -> dict:
     return await tools.scrape(url)
 
 
+def register_provider_tools(options: dict) -> list[str]:
+    """Register media/news/wiki tools for tools with configured providers."""
+    active: list[str] = []
+
+    video_engines = engines_for("video", options.get("video_search_providers"))
+    if video_engines:
+        @mcp.tool()
+        async def video_search(query: str, num_results: int | None = None) -> dict:
+            """Search for videos on the configured video platforms.
+
+            Use this when the user asks for a video, clip, or something to
+            watch. Follow the returned instruction when answering.
+            """
+            return await tools.engines_search(
+                "videos", video_engines, query, num_results
+            )
+        active.append("video_search")
+
+    image_engines = engines_for("image", options.get("image_search_providers"))
+    if image_engines:
+        @mcp.tool()
+        async def image_search(query: str, num_results: int | None = None) -> dict:
+            """Search for images.
+
+            Use this when the user asks to see a picture or photo of
+            something. Follow the returned instruction when answering.
+            """
+            return await tools.engines_search(
+                "images", image_engines, query, num_results
+            )
+        active.append("image_search")
+
+    news_engines = engines_for("news", options.get("news_search_providers"))
+    if news_engines:
+        @mcp.tool()
+        async def news_search(query: str, num_results: int | None = None) -> dict:
+            """Search recent news coverage on the configured news sources.
+
+            Use this when the user asks about current events or headlines.
+            Follow the returned instruction when answering.
+            """
+            return await tools.engines_search(
+                "news", news_engines, query, num_results
+            )
+        active.append("news_search")
+
+    wiki_engines = engines_for("wiki", options.get("wiki_search_providers"))
+    if wiki_engines:
+        @mcp.tool()
+        async def wiki_search(query: str, num_results: int | None = None) -> dict:
+            """Look up encyclopedic knowledge on the configured wikis.
+
+            Use this for definitions, historical facts, and general
+            reference questions. Follow the returned instruction.
+            """
+            return await tools.engines_search(
+                "wiki", wiki_engines, query, num_results
+            )
+        active.append("wiki_search")
+
+    return active
+
+
 if __name__ == "__main__":
+    extra = register_provider_tools(load_options())
+    log.info(
+        "tools: web_search, web_scrape%s",
+        (", " + ", ".join(extra)) if extra else " (no provider tools configured)",
+    )
     mcp.run(transport="streamable-http")
