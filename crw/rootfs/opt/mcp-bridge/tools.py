@@ -207,7 +207,11 @@ async def engines_search(
     """Query SearXNG directly, scoped to the given engines."""
     limit = effective_limit(num_results)
     try:
-        async with httpx.AsyncClient(timeout=SEARCH_TIMEOUT_S) as client:
+        async with httpx.AsyncClient(
+            timeout=SEARCH_TIMEOUT_S,
+            # botdetection logs an error for proxy-less local requests
+            headers={"X-Forwarded-For": "127.0.0.1"},
+        ) as client:
             resp = await client.get(
                 f"{SEARXNG_URL}/search",
                 params={

@@ -55,7 +55,7 @@ def test_engines_for_tool_includes_key_gated_engines():
         "image_search_providers": [],
         "flickr_api_key": "flk",
     }
-    assert engines_for_tool("video", options) == ["youtube", "youtube_api"]
+    assert engines_for_tool("video", options) == ["youtube", "youtube api"]
     # key alone activates the tool even with no brand providers
-    assert engines_for_tool("image", options) == ["flickr_api"]
+    assert engines_for_tool("image", options) == ["flickr api"]
     assert engines_for_tool("news", options) == []

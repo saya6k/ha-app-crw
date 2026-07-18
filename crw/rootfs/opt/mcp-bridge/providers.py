@@ -87,17 +87,29 @@ def engines_for(tool: str, brands: list[str] | None) -> list[str]:
 
 
 # Key-gated engines: activated only when their add-on option carries a key.
-# option name -> engine name (all ship `inactive: true` upstream).
+# SearXNG rejects engine *names* containing underscores at load time, so the
+# upstream inactive entries (youtube_api, flickr_api) can't simply be revived
+# — each option instead adds a fresh legally-named entry pointing at the
+# module via `engine:`. braveapi has a legal name and is overridden in place.
 KEY_OPTION_ENGINES = {
-    "youtube_api_key": "youtube_api",
-    "flickr_api_key": "flickr_api",
-    "brave_api_key": "braveapi",
+    "youtube_api_key": {
+        "name": "youtube api",
+        "engine": "youtube_api",
+        "shortcut": "yta",
+    },
+    "flickr_api_key": {
+        "name": "flickr api",
+        "engine": "flickr",
+        "categories": "images",
+        "shortcut": "fla",
+    },
+    "brave_api_key": {"name": "braveapi"},
 }
 
 # Which key-gated engine feeds which tool ("web" joins the general set).
 KEY_ENGINE_TOOLS = {
-    "video": [("youtube_api", "youtube_api_key")],
-    "image": [("flickr_api", "flickr_api_key")],
+    "video": [("youtube api", "youtube_api_key")],
+    "image": [("flickr api", "flickr_api_key")],
 }
 
 
@@ -113,7 +125,7 @@ def engines_for_tool(tool: str, options: dict) -> list[str]:
 def missing_key_hints(options: dict) -> list[str]:
     """Log lines for key-gated engines that stay off because no key is set."""
     return [
-        f"{engine} stays disabled — set {key_option} to enable it"
-        for key_option, engine in KEY_OPTION_ENGINES.items()
+        f"{entry['name']} stays disabled — set {key_option} to enable it"
+        for key_option, entry in KEY_OPTION_ENGINES.items()
         if not options.get(key_option)
     ]

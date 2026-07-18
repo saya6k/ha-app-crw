@@ -92,19 +92,14 @@ def render(base: dict, options: dict, secret_key: str) -> dict:
     # Auto-added network parents keep their default state.
     engine_entries = [{"name": e, "disabled": False} for e in provider_engines]
 
-    # Named key options activate key-gated engines that ship inactive
-    # upstream (youtube_api, flickr_api, braveapi).
-    for key_option, engine in KEY_OPTION_ENGINES.items():
+    # Named key options activate key-gated engines. Entries carry a full
+    # legal definition (see providers.KEY_OPTION_ENGINES for why).
+    for key_option, entry in KEY_OPTION_ENGINES.items():
         key = str(options.get(key_option) or "").strip()
         if not key:
             continue
         engine_entries.append(
-            {
-                "name": engine,
-                "api_key": key,
-                "inactive": False,
-                "disabled": False,
-            }
+            {**entry, "api_key": key, "inactive": False, "disabled": False}
         )
 
     if engine_entries:
