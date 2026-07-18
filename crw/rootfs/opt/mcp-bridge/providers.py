@@ -84,3 +84,36 @@ def engines_for(tool: str, brands: list[str] | None) -> list[str]:
     """Map selected brand names to engine names, ignoring unknown brands."""
     mapping = PROVIDER_ENGINES[tool]
     return [mapping[b] for b in brands or [] if b in mapping]
+
+
+# Key-gated engines: activated only when their add-on option carries a key.
+# option name -> engine name (all ship `inactive: true` upstream).
+KEY_OPTION_ENGINES = {
+    "youtube_api_key": "youtube_api",
+    "flickr_api_key": "flickr_api",
+    "brave_api_key": "braveapi",
+}
+
+# Which key-gated engine feeds which tool ("web" joins the general set).
+KEY_ENGINE_TOOLS = {
+    "video": [("youtube_api", "youtube_api_key")],
+    "image": [("flickr_api", "flickr_api_key")],
+}
+
+
+def engines_for_tool(tool: str, options: dict) -> list[str]:
+    """Engines for a tool: mapped brand providers plus key-gated engines."""
+    engines = engines_for(tool, options.get(f"{tool}_search_providers"))
+    for engine, key_option in KEY_ENGINE_TOOLS.get(tool, []):
+        if options.get(key_option):
+            engines.append(engine)
+    return engines
+
+
+def missing_key_hints(options: dict) -> list[str]:
+    """Log lines for key-gated engines that stay off because no key is set."""
+    return [
+        f"{engine} stays disabled — set {key_option} to enable it"
+        for key_option, engine in KEY_OPTION_ENGINES.items()
+        if not options.get(key_option)
+    ]

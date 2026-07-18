@@ -44,26 +44,12 @@ def test_safe_search_from_options_with_validation():
     assert render(BASE, {"safe_search": "x"}, "k")["search"]["safe_search"] == 1
 
 
-def test_engine_keep_only_enables_selection():
-    out = render(BASE, {"search_engines": ["duckduckgo", "brave"]}, "k")
-    assert out["use_default_settings"] == {
-        "engines": {"keep_only": ["duckduckgo", "brave"]}
-    }
-    # selected engines are force-enabled (some defaults ship disabled)
-    assert out["engines"] == [
-        {"name": "duckduckgo", "disabled": False},
-        {"name": "brave", "disabled": False},
-    ]
-
-
-def test_engine_selection_pulls_network_parents():
-    # qwant news declares `network: qwant` — the parent must be kept (not
-    # enabled) or SearXNG's network init dies with KeyError: 'qwant'
-    out = render(BASE, {"search_engines": ["qwant news", "brave.images"]}, "k")
-    keep = out["use_default_settings"]["engines"]["keep_only"]
-    assert keep == ["qwant news", "brave.images", "qwant", "brave"]
-    enabled = [e["name"] for e in out["engines"]]
-    assert enabled == ["qwant news", "brave.images"]
+def test_web_engine_set_is_fixed_to_searxng_defaults():
+    # No per-engine web selection: search_engines is not an option anymore,
+    # the base stays SearXNG defaults minus the stability removals.
+    out = render(BASE, {"search_engines": ["duckduckgo"]}, "k")
+    assert "keep_only" not in out["use_default_settings"]["engines"]
+    assert "remove" in out["use_default_settings"]["engines"]
 
 
 def test_outgoing_proxy():
@@ -93,31 +79,28 @@ def test_providers_join_default_remove_mode():
     assert enabled == ["qwant videos", "baidu images"]
 
 
-def test_providers_join_keep_only_mode():
+def test_named_api_key_options_activate_engines():
     out = render(
         BASE,
         {
-            "search_engines": ["duckduckgo"],
-            "video_search_providers": ["naver"],
-            "wiki_search_providers": ["wikipedia"],
+            "youtube_api_key": "AIza-test",
+            "flickr_api_key": "flk",
+            "brave_api_key": "",
         },
         "k",
     )
-    keep = out["use_default_settings"]["engines"]["keep_only"]
-    assert keep == ["duckduckgo", "naver videos", "wikipedia"]
-    enabled = [e["name"] for e in out["engines"]]
-    assert enabled == ["duckduckgo", "naver videos", "wikipedia"]
-
-
-def test_provider_api_keys_injected():
-    out = render(
-        BASE,
-        {"provider_api_keys": ["youtube_api: AIza-test", "bogus-no-colon"]},
-        "k",
-    )
+    entries = out["engines"]
     assert {
         "name": "youtube_api",
         "api_key": "AIza-test",
         "inactive": False,
         "disabled": False,
-    } in out["engines"]
+    } in entries
+    assert {
+        "name": "flickr_api",
+        "api_key": "flk",
+        "inactive": False,
+        "disabled": False,
+    } in entries
+    # empty key -> engine stays untouched
+    assert not any(e["name"] == "braveapi" for e in entries)

@@ -147,12 +147,24 @@ Repo 생성·secret(`CATALOG_PAT`)·초기 릴리스는
 ## 5. config.yaml 옵션 (사용자 knob)
 
 ```yaml
-options:
-  max_search_results: 3   # 1–6
-  safe_search: 1          # 0/1/2 (SearXNG)
+options:                       # 기본 노출 knob
+  image_search_providers: []   # 브랜드 멀티셀렉트 — 비우면 tool 미등록
+  max_search_results: 3        # 1–6, 모든 검색 tool 공통 상한
+  news_search_providers: []
+  outgoing_proxy: ''           # anti-bot egress proxy (search+scrape)
+  safe_search: 1               # 0/1/2 (SearXNG)
+  video_search_providers: []
+  wiki_search_providers: []
+schema:                        # schema 전용(optional) — 설정 전엔 미노출
+  brave_api_key: password?     # braveapi 엔진 활성 (web_search 추가 소스)
+  flickr_api_key: password?    # flickr_api 엔진 활성 (image_search 추가)
+  youtube_api_key: password?   # youtube_api 엔진 활성 (video_search 추가)
 ```
 
-(schema 키 알파벳 순 · en/ko 번역 쌍 필수. SearXNG 엔진 커스텀은 §10-3)
+(schema 키 알파벳 순 · en/ko 번역 쌍 필수 · API 키류는 options 기본값 없이
+schema에만 둔다 — 미설정 시 UI 미노출. **web_search 엔진셋은 SearXNG 기본값
+고정**, 특화 tool provider 선택만 opt-in. 키 미설정 key-gated 엔진은 기동
+로그에 "stays disabled — set <option>" 힌트를 남긴다.)
 
 ## 6. Code Style
 
