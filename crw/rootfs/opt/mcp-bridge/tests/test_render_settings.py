@@ -90,17 +90,36 @@ def test_named_api_key_options_activate_engines():
         "k",
     )
     entries = out["engines"]
+    # SearXNG rejects engine *names* containing underscores at load time,
+    # so key-gated engines are added as fresh legally-named entries that
+    # reference the module via `engine:` instead of reviving the inactive
+    # underscore-named defaults.
     assert {
-        "name": "youtube_api",
+        "name": "youtube api",
+        "engine": "youtube_api",
+        "shortcut": "yta",
         "api_key": "AIza-test",
         "inactive": False,
         "disabled": False,
     } in entries
     assert {
-        "name": "flickr_api",
+        "name": "flickr api",
+        "engine": "flickr",
+        "categories": "images",
+        "shortcut": "fla",
         "api_key": "flk",
         "inactive": False,
         "disabled": False,
     } in entries
     # empty key -> engine stays untouched
     assert not any(e["name"] == "braveapi" for e in entries)
+
+
+def test_brave_api_key_overrides_existing_entry():
+    out = render(BASE, {"brave_api_key": "bk"}, "k")
+    assert {
+        "name": "braveapi",
+        "api_key": "bk",
+        "inactive": False,
+        "disabled": False,
+    } in out["engines"]
