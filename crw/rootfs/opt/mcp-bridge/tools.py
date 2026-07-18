@@ -93,6 +93,140 @@ def format_search_response(payload: dict, query: str) -> dict:
     return out
 
 
+SEARXNG_URL = os.environ.get("BRIDGE_SEARXNG_URL", "http://127.0.0.1:8080")
+
+MEDIA_INSTRUCTION = (
+    "Summarize what was found in 2-3 concise sentences for the user. "
+    "The user cannot see the raw results — mention the most relevant "
+    "titles or sources by name instead of listing URLs."
+)
+
+
+def _base_response(kind: str, query: str, results: list, featured) -> dict:
+    out = {
+        "source": "searxng",
+        "type": kind,
+        "query": query,
+        "num_results": len(results),
+        "results": results,
+        "featured_image": featured,
+        "instruction": MEDIA_INSTRUCTION,
+    }
+    if not results:
+        out["message"] = "No results found for this query."
+    return out
+
+
+def format_video_response(rows: list[dict], query: str) -> dict:
+    results = [
+        {
+            "url": r.get("url", ""),
+            "title": r.get("title", ""),
+            "snippet": r.get("content") or "",
+            "site_name": _site_name(r.get("url", "")),
+            "thumbnail": r.get("thumbnail") or None,
+            "channel": r.get("author") or None,
+            "length": r.get("length") or None,
+            "published": r.get("publishedDate") or None,
+        }
+        for r in rows
+    ]
+    featured = next((r["thumbnail"] for r in results if r["thumbnail"]), None)
+    return _base_response("videos", query, results, featured)
+
+
+def format_image_response(rows: list[dict], query: str) -> dict:
+    results = [
+        {
+            "title": r.get("title", ""),
+            "image_url": r.get("img_src") or "",
+            "thumbnail_url": r.get("thumbnail_src") or r.get("img_src") or "",
+            "source_url": r.get("url", ""),
+            "site_name": _site_name(r.get("url", "")),
+        }
+        for r in rows
+    ]
+    featured = next((r["image_url"] for r in results if r["image_url"]), None)
+    return _base_response("images", query, results, featured)
+
+
+def format_news_response(rows: list[dict], query: str) -> dict:
+    results = [
+        {
+            "url": r.get("url", ""),
+            "title": r.get("title", ""),
+            "snippet": r.get("content") or "",
+            "site_name": _site_name(r.get("url", "")),
+            "published": r.get("publishedDate") or None,
+        }
+        for r in rows
+    ]
+    featured = next(
+        (r.get("thumbnail") for r in rows if r.get("thumbnail")), None
+    )
+    return _base_response("news", query, results, featured)
+
+
+def format_wiki_response(
+    rows: list[dict], query: str, infoboxes: list[dict] | None = None
+) -> dict:
+    # wikipedia-family engines answer via `infoboxes`, not `results` —
+    # surface those first, they are the direct article matches.
+    results = [
+        {
+            "url": box.get("id", ""),
+            "title": box.get("infobox", ""),
+            "snippet": box.get("content") or "",
+            "site_name": _site_name(box.get("id", "")),
+        }
+        for box in infoboxes or []
+    ]
+    results += [
+        {
+            "url": r.get("url", ""),
+            "title": r.get("title", ""),
+            "snippet": r.get("content") or "",
+            "site_name": _site_name(r.get("url", "")),
+        }
+        for r in rows
+    ]
+    return _base_response("wiki", query, results, None)
+
+
+_FORMATTERS = {
+    "videos": format_video_response,
+    "images": format_image_response,
+    "news": format_news_response,
+    "wiki": format_wiki_response,
+}
+
+
+async def engines_search(
+    kind: str, engines: list[str], query: str, num_results: int | None = None
+) -> dict:
+    """Query SearXNG directly, scoped to the given engines."""
+    limit = effective_limit(num_results)
+    try:
+        async with httpx.AsyncClient(timeout=SEARCH_TIMEOUT_S) as client:
+            resp = await client.get(
+                f"{SEARXNG_URL}/search",
+                params={
+                    "q": query,
+                    "format": "json",
+                    "engines": ",".join(engines),
+                },
+            )
+            payload = resp.json()
+            rows = (payload.get("results") or [])[:limit]
+    except (httpx.HTTPError, ValueError) as err:
+        return {"error": f"search request failed: {err}", "query": query}
+    if kind == "wiki":
+        return format_wiki_response(
+            rows, query, (payload.get("infoboxes") or [])[:limit]
+        )
+    return _FORMATTERS[kind](rows, query)
+
+
 async def search(query: str, num_results: int | None = None) -> dict:
     """Search the web via crw /v1/search (SearXNG-backed)."""
     limit = effective_limit(num_results)

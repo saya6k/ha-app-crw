@@ -72,3 +72,52 @@ def test_outgoing_proxy():
     # empty/null stays absent
     assert "outgoing" not in render(BASE, {"outgoing_proxy": ""}, "k")
     assert "outgoing" not in render(BASE, {"outgoing_proxy": None}, "k")
+
+
+# ---- media/wiki provider integration -------------------------------------
+
+
+def test_providers_join_default_remove_mode():
+    # default mode: providers must not stay in the removed list, and get
+    # force-enabled; qwant videos also needs its network parent kept
+    out = render(
+        BASE,
+        {"video_search_providers": ["qwant"], "image_search_providers": ["baidu"]},
+        "k",
+    )
+    removed = out["use_default_settings"]["engines"]["remove"]
+    assert "qwant videos" not in removed
+    assert "qwant" not in removed  # network parent must stay loaded
+    assert "wikidata" in removed  # unrelated removals intact
+    enabled = [e["name"] for e in out["engines"]]
+    assert enabled == ["qwant videos", "baidu images"]
+
+
+def test_providers_join_keep_only_mode():
+    out = render(
+        BASE,
+        {
+            "search_engines": ["duckduckgo"],
+            "video_search_providers": ["naver"],
+            "wiki_search_providers": ["wikipedia"],
+        },
+        "k",
+    )
+    keep = out["use_default_settings"]["engines"]["keep_only"]
+    assert keep == ["duckduckgo", "naver videos", "wikipedia"]
+    enabled = [e["name"] for e in out["engines"]]
+    assert enabled == ["duckduckgo", "naver videos", "wikipedia"]
+
+
+def test_provider_api_keys_injected():
+    out = render(
+        BASE,
+        {"provider_api_keys": ["youtube_api: AIza-test", "bogus-no-colon"]},
+        "k",
+    )
+    assert {
+        "name": "youtube_api",
+        "api_key": "AIza-test",
+        "inactive": False,
+        "disabled": False,
+    } in out["engines"]

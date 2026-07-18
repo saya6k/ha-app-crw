@@ -12,7 +12,10 @@ from pathlib import Path
 
 import yaml
 
+from providers import engines_for
+
 VALID_SAFE_SEARCH = (0, 1, 2)
+PROVIDER_TOOLS = ("video", "image", "news", "wiki")
 
 # Engines that fail or spam errors in a typical HA deployment:
 # - wikidata: startup SPARQL query widely answered with 403
@@ -69,6 +72,20 @@ def render(base: dict, options: dict, secret_key: str) -> dict:
         out["search"]["safe_search"] = safe
 
     engines = [e for e in options.get("search_engines") or [] if e]
+
+    # Engines backing the media/news/wiki tools must be loaded regardless of
+    # the web engine selection, with their `network:` parents.
+    provider_engines: list[str] = []
+    for tool in PROVIDER_TOOLS:
+        for e in engines_for(tool, options.get(f"{tool}_search_providers")):
+            if e not in provider_engines:
+                provider_engines.append(e)
+    provider_closure = list(provider_engines)
+    for e in provider_engines:
+        parent = NETWORK_PARENTS.get(e)
+        if parent and parent not in provider_closure:
+            provider_closure.append(parent)
+
     if engines:
         # keep_only must include every referenced `network:` parent or
         # SearXNG's network init crashes (KeyError) on the orphaned child.
@@ -77,14 +94,39 @@ def render(base: dict, options: dict, secret_key: str) -> dict:
             parent = NETWORK_PARENTS.get(engine)
             if parent and parent not in closure:
                 closure.append(parent)
+        for e in provider_closure:
+            if e not in closure:
+                closure.append(e)
         out["use_default_settings"] = {"engines": {"keep_only": closure}}
-        # Force-enable what the user picked — several defaults ship
-        # disabled. Auto-added parents keep their default state.
-        out["engines"] = [{"name": e, "disabled": False} for e in engines]
+        enabled = engines + [e for e in provider_engines if e not in engines]
     else:
-        out["use_default_settings"] = {
-            "engines": {"remove": list(DEFAULT_REMOVED_ENGINES)}
-        }
+        removed = [
+            e for e in DEFAULT_REMOVED_ENGINES if e not in provider_closure
+        ]
+        out["use_default_settings"] = {"engines": {"remove": removed}}
+        enabled = provider_engines
+
+    # Force-enable what the user picked — several defaults ship disabled.
+    # Auto-added network parents keep their default state.
+    engine_entries = [{"name": e, "disabled": False} for e in enabled]
+
+    # provider_api_keys: "engine_name: key" entries activate key-gated
+    # engines (e.g. youtube_api, flickr_api) that ship inactive upstream.
+    for entry in options.get("provider_api_keys") or []:
+        name, sep, key = str(entry).partition(":")
+        if not sep or not name.strip() or not key.strip():
+            continue
+        engine_entries.append(
+            {
+                "name": name.strip(),
+                "api_key": key.strip(),
+                "inactive": False,
+                "disabled": False,
+            }
+        )
+
+    if engine_entries:
+        out["engines"] = engine_entries
 
     proxy = options.get("outgoing_proxy")
     if proxy:
