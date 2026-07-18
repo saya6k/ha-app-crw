@@ -12,7 +12,6 @@ arch:
   - amd64
 init: false
 startup: services
-stage: experimental
 discovery:
   - mcp
 ports:
