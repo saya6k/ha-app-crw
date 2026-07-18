@@ -25,6 +25,8 @@ PROVIDER_TOOLS = ("video", "image", "news", "wiki")
 #   The whole family must go together — qwant news/images/videos declare
 #   `network: qwant`, and removing only the base engine breaks SearXNG's
 #   network init with KeyError: 'qwant'.
+# (karmasearch: its API answers 403 from the first query on most
+# self-hosted addresses, same failure mode as qwant.)
 DEFAULT_REMOVED_ENGINES = [
     "wikidata",
     "ahmia",
@@ -34,6 +36,10 @@ DEFAULT_REMOVED_ENGINES = [
     "qwant news",
     "qwant images",
     "qwant videos",
+    "karmasearch",
+    "karmasearch images",
+    "karmasearch news",
+    "karmasearch videos",
 ]
 
 # child engine -> engine whose `network:` it references, derived from the
