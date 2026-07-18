@@ -23,8 +23,6 @@ ports_description:
     reaches it over the internal network; map it only for external MCP
     clients.
 options:
-  brave_api_key: ''
-  flickr_api_key: ''
   image_search_providers: []
   max_search_results: 3
   news_search_providers: []
@@ -32,7 +30,6 @@ options:
   safe_search: 1
   video_search_providers: []
   wiki_search_providers: []
-  youtube_api_key: ''
 schema:
   brave_api_key: password?
   flickr_api_key: password?
