@@ -1,6 +1,6 @@
 # Spec: ha-app-crw — CRW Web Tools (검색·스크레이핑 MCP 공급 App)
 
-**Repo:** `saya6k/ha-app-crw` (신규) · **Slug:** `crw` · **Stage:** `experimental`
+**Repo:** `saya6k/ha-app-crw` (신규) · **Slug:** `crw` · **Stage:** stable (v0.3.0에서 experimental 제거)
 **Date:** 2026-07-17 (rev 2 — unix socket 경량화, aarch64 prebuilt 확정, interact/secret은 [ha-app-playwright](../ha-app-playwright/SPEC.md)로 분리)
 
 ## 0. 아키텍처 판정 (요청하신 확인 사항)
