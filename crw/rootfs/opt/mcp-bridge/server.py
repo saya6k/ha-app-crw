@@ -7,7 +7,7 @@ import os
 from mcp.server.fastmcp import FastMCP
 
 import tools
-from providers import engines_for
+from providers import engines_for_tool, missing_key_hints
 
 logging.basicConfig(level=logging.INFO, format="[mcp-bridge] %(message)s")
 log = logging.getLogger(__name__)
@@ -55,7 +55,7 @@ def register_provider_tools(options: dict) -> list[str]:
     """Register media/news/wiki tools for tools with configured providers."""
     active: list[str] = []
 
-    video_engines = engines_for("video", options.get("video_search_providers"))
+    video_engines = engines_for_tool("video", options)
     if video_engines:
         @mcp.tool()
         async def video_search(query: str, num_results: int | None = None) -> dict:
@@ -69,7 +69,7 @@ def register_provider_tools(options: dict) -> list[str]:
             )
         active.append("video_search")
 
-    image_engines = engines_for("image", options.get("image_search_providers"))
+    image_engines = engines_for_tool("image", options)
     if image_engines:
         @mcp.tool()
         async def image_search(query: str, num_results: int | None = None) -> dict:
@@ -83,7 +83,7 @@ def register_provider_tools(options: dict) -> list[str]:
             )
         active.append("image_search")
 
-    news_engines = engines_for("news", options.get("news_search_providers"))
+    news_engines = engines_for_tool("news", options)
     if news_engines:
         @mcp.tool()
         async def news_search(query: str, num_results: int | None = None) -> dict:
@@ -97,7 +97,7 @@ def register_provider_tools(options: dict) -> list[str]:
             )
         active.append("news_search")
 
-    wiki_engines = engines_for("wiki", options.get("wiki_search_providers"))
+    wiki_engines = engines_for_tool("wiki", options)
     if wiki_engines:
         @mcp.tool()
         async def wiki_search(query: str, num_results: int | None = None) -> dict:
@@ -115,7 +115,10 @@ def register_provider_tools(options: dict) -> list[str]:
 
 
 if __name__ == "__main__":
-    extra = register_provider_tools(load_options())
+    options = load_options()
+    extra = register_provider_tools(options)
+    for hint in missing_key_hints(options):
+        log.info(hint)
     log.info(
         "tools: web_search, web_scrape%s",
         (", " + ", ".join(extra)) if extra else " (no provider tools configured)",

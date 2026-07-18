@@ -12,7 +12,7 @@ from pathlib import Path
 
 import yaml
 
-from providers import engines_for
+from providers import KEY_OPTION_ENGINES, engines_for
 
 VALID_SAFE_SEARCH = (0, 1, 2)
 PROVIDER_TOOLS = ("video", "image", "news", "wiki")
@@ -71,10 +71,9 @@ def render(base: dict, options: dict, secret_key: str) -> dict:
     if safe in VALID_SAFE_SEARCH:
         out["search"]["safe_search"] = safe
 
-    engines = [e for e in options.get("search_engines") or [] if e]
-
-    # Engines backing the media/news/wiki tools must be loaded regardless of
-    # the web engine selection, with their `network:` parents.
+    # The web engine set is fixed to the SearXNG defaults (minus the
+    # stability removals). Engines backing the media/news/wiki tools are
+    # loaded on top, with their `network:` parents.
     provider_engines: list[str] = []
     for tool in PROVIDER_TOOLS:
         for e in engines_for(tool, options.get(f"{tool}_search_providers")):
@@ -86,40 +85,23 @@ def render(base: dict, options: dict, secret_key: str) -> dict:
         if parent and parent not in provider_closure:
             provider_closure.append(parent)
 
-    if engines:
-        # keep_only must include every referenced `network:` parent or
-        # SearXNG's network init crashes (KeyError) on the orphaned child.
-        closure = list(engines)
-        for engine in engines:
-            parent = NETWORK_PARENTS.get(engine)
-            if parent and parent not in closure:
-                closure.append(parent)
-        for e in provider_closure:
-            if e not in closure:
-                closure.append(e)
-        out["use_default_settings"] = {"engines": {"keep_only": closure}}
-        enabled = engines + [e for e in provider_engines if e not in engines]
-    else:
-        removed = [
-            e for e in DEFAULT_REMOVED_ENGINES if e not in provider_closure
-        ]
-        out["use_default_settings"] = {"engines": {"remove": removed}}
-        enabled = provider_engines
+    removed = [e for e in DEFAULT_REMOVED_ENGINES if e not in provider_closure]
+    out["use_default_settings"] = {"engines": {"remove": removed}}
 
-    # Force-enable what the user picked — several defaults ship disabled.
+    # Force-enable selected providers — several defaults ship disabled.
     # Auto-added network parents keep their default state.
-    engine_entries = [{"name": e, "disabled": False} for e in enabled]
+    engine_entries = [{"name": e, "disabled": False} for e in provider_engines]
 
-    # provider_api_keys: "engine_name: key" entries activate key-gated
-    # engines (e.g. youtube_api, flickr_api) that ship inactive upstream.
-    for entry in options.get("provider_api_keys") or []:
-        name, sep, key = str(entry).partition(":")
-        if not sep or not name.strip() or not key.strip():
+    # Named key options activate key-gated engines that ship inactive
+    # upstream (youtube_api, flickr_api, braveapi).
+    for key_option, engine in KEY_OPTION_ENGINES.items():
+        key = str(options.get(key_option) or "").strip()
+        if not key:
             continue
         engine_entries.append(
             {
-                "name": name.strip(),
-                "api_key": key.strip(),
+                "name": engine,
+                "api_key": key,
                 "inactive": False,
                 "disabled": False,
             }

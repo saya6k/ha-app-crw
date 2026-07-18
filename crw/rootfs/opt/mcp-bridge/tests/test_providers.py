@@ -44,3 +44,18 @@ def test_all_mapped_engines_exist_in_pinned_searxng():
 
 def test_news_brand_maps_to_news_engine():
     assert engines_for("news", ["naver", "reuters"]) == ["naver news", "reuters"]
+
+
+def test_engines_for_tool_includes_key_gated_engines():
+    from providers import engines_for_tool
+
+    options = {
+        "video_search_providers": ["youtube"],
+        "youtube_api_key": "AIza",
+        "image_search_providers": [],
+        "flickr_api_key": "flk",
+    }
+    assert engines_for_tool("video", options) == ["youtube", "youtube_api"]
+    # key alone activates the tool even with no brand providers
+    assert engines_for_tool("image", options) == ["flickr_api"]
+    assert engines_for_tool("news", options) == []
