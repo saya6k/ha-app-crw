@@ -6,6 +6,11 @@ FROM ${BUILD_FROM}
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
+# The base image is labeled io.hass.type=base and build-image only stamps
+# io.hass.arch/version, so without this the add-on image inherits "base".
+# Supervisor's own value is "app" (META_ADDON = "addon" is marked legacy).
+LABEL io.hass.type="app"
+
 # ---- crw-server (prebuilt static binary, AGPL-3.0) -----------------------
 ARG CRW_VERSION=0.25.1
 ARG CRW_SHA256_AMD64=70484626341003e784bcc04b5d7552ba189091377c9a6b872bde499bf85470c9
