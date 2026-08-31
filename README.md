@@ -9,8 +9,6 @@ catalog. This repo carries the source, Dockerfile, and CI; the catalog carries
 the metadata.
 
 - App docs: [crw/DOCS.md](crw/DOCS.md)
-- Design spec: [SPEC.md](SPEC.md)
-- Task plan: [tasks/plan.md](tasks/plan.md)
 
 ## Release flow
 
