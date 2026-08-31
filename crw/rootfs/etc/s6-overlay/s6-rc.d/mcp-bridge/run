@@ -2,17 +2,6 @@
 # shellcheck shell=bash
 set -euo pipefail
 
-# Announce the MCP endpoint via Supervisor discovery. Harmless today (core's
-# mcp integration has no hassio discovery step yet) and free once it does.
-# Skipped silently when no Supervisor is present (bare docker smoke tests).
-if bashio::supervisor.ping 2>/dev/null; then
-  if bashio::discovery "mcp" "{\"url\": \"http://$(hostname):8099/mcp\"}" > /dev/null; then
-    bashio::log.info "Announced MCP endpoint to Supervisor"
-  else
-    bashio::log.warning "Supervisor discovery announce failed (non-fatal)"
-  fi
-fi
-
 BRIDGE_MAX_RESULTS="$(bashio::config 'max_search_results' '3' 2>/dev/null || echo 3)"
 case "${BRIDGE_MAX_RESULTS}" in [1-6]) ;; *) BRIDGE_MAX_RESULTS=3 ;; esac
 export BRIDGE_MAX_RESULTS
